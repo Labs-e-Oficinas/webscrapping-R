@@ -1,0 +1,87 @@
+\documentclass[11pt]{beamer}
+\usepackage{beamerthemesplit}
+\usepackage[brazilian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\let\oldemptyset\emptyset
+\let\emptyset\varnothing
+
+\title{Captura de dados da internet, sistematização o e análise de ”Big data”}
+
+\subtitle{Aula 2}
+
+\author[Leonardo Sangali Barone]{Leonardo Sangali Barone\\MQ 2015 - UFMG}
+\date[04 de Agosto de 2015]{04 de Agosto de 2015}
+
+\begin{document}
+\frame{\titlepage}
+
+\section{Agenda}
+
+\begin{frame}
+	\frametitle{Agenda}
+	\begin{itemize}
+		\item Listas e tipos de objetos no R (lousa)
+		\item Brevíssima introdução a HTML (pdf)
+		\item Atividade 2
+		\item Atividade 3
+	\end{itemize}
+\end{frame}
+
+\section{Introdução a HTML}
+
+\begin{frame}
+	\frametitle{Introdução a HTML}
+	HTML significa HyperText Markup Language. Hypertext (hipertexto) significa "texto que contém links."
+\newline\\
+	Uma markup language (linguagem de marcação) é uma linguagem de programação usada para fazer com que o texto faça mais do que simplesmente ficar parado em uma página: ela pode transformar textos em imagens, links, tabelas, listas, e muito mais. HTML é a linguagem que vamos aprender.	
+\newline\\
+(Texto retirado de www.codeacademy.com)
+\end{frame}
+
+\begin{frame}
+	\frametitle{Introdução a HTML}
+	A grande maioria das páginas das quais queremos obter os dados estão escritas em HTML.
+	\newline\\
+	Nossa atividade será criar páginas extremamente simples em HTML para compreender o básico de um documento HTML.
+	\newline\\
+	Precisamos apenas um Notepad e um navegador para começar a aprender.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Introdução a HTML}
+	As marcações em um documento HTML são chamadas de \emph{tags}.
+	\newline\\
+	Cada tag começa com o símbolo $<$ e termina com $>$.
+	\newline\\
+	Exemplo: $<$title$>$
+\end{frame}
+
+\begin{frame}
+	\frametitle{Introdução a HTML}
+	Em geral as tags vem em pares: uma de início e outra de encerramento.
+	\newline\\
+	Início: $<$title$>$\\
+	Encerramento: $<$/title$>$
+\end{frame}
+
+\begin{frame}
+	\frametitle{Introdução a HTML}
+	As tags podem conter atributos, que, por sua vez, recebem valores
+	\newline\\
+	Exemplo: $<$tag atributo = ``valor''$>$ $<$/title$>$
+	\newline\\
+	Os atributos definem as características das tags (por exemplo, estáticas) e também servem para a programadora classificar a tag dentre as várias tags do mesmo tipo.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Introdução a HTML}
+	Links, por exemplo, ficam contidos na tag $<$a$>$ $<$/a$>$ e recebem o atributo href, que contém o endereço para o qual apontam:
+	\newline\\
+	Exemplo: $<$a href$=$"http://pretocafe.com.br/"$>$ $<$/a$>$
+\end{frame}
+
+
+\end{document}
+

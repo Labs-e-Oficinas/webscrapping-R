@@ -1,0 +1,178 @@
+\documentclass[11pt]{beamer}
+\usepackage{beamerthemesplit}
+\usepackage[brazilian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\let\oldemptyset\emptyset
+\let\emptyset\varnothing
+
+\title{Captura de dados da internet, sistematização o e análise de ”Big data”}
+
+\subtitle{Aula 1}
+
+\author[Leonardo Sangali Barone]{Leonardo Sangali Barone\\MQ 2015 - UFMG}
+\date[03 de Agosto de 2015]{03 de Agosto de 2015}
+
+\begin{document}
+\frame{\titlepage}
+
+\section{Apresentação}
+\begin{frame}
+	\LARGE{Apresentação}
+\end{frame}
+
+\begin{frame}
+	\frametitle{O que vamos fazer em cinco dias?}
+	A resposta é bastante simples: aprender a programar. E programar com o objetivo de coletar dados sem clicar e arrastar inúmeras vezes (centenas? milhares? milhões?).
+	\newline\\
+	Para capturar dados na internet e sistematizar grandes quantidades de dados nossas únicas alternativas são:
+	\begin{itemize}
+		\item Aprender uma linguagem de programação;
+		\item Usar um software proprietário desenhado para este propósito específico.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{O que vamos fazer em cinco dias?}
+	O grande problema de usar software proprietário é que estamos limitados ao que ele foi desenhado para fazer (além do fato de que software livre é bem mais legal!).
+	\newline\\
+	Nossa alternativa será, portanto, aprender a usar R para a captura de dados e construção de conjuntos de dados que estejam prontos para aplicarmos os nossos conhecimentos de análise.
+	\newline\\
+	Além de R, vamos trabalhar também com algumas outras linguagens/estruturas de dados, como HTML e XML.
+\end{frame}
+
+\begin{frame}
+	\frametitle{O que vamos fazer em cinco dias?}
+	Há vários ganhos em aprender a programar em R:
+	\begin{itemize}
+		\item É software livre e acessível a todo mundo
+		\item Há uma comunidade muito e grande e crescendo incrivelmente rápido
+		\item É uma linguagem de alto nível voltada a objetos e muito do que você vai aprender aqui é próximo ou quase idêntico a qualquer linguagem de programação (você vai poder dizer que sabe algo de programação!)
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{O que vamos fazer em cinco dias?}
+	Há vários ganhos em aprender a programar em R:
+	\begin{itemize}
+		\item É uma linguagem que foi desenvolvida para análise de dados. Uma vez que a captura de dados termina, já podemos começar a análise, vizualização e inferência dos dados no próprio R.
+		\item É uma das linguagens mais populares nas ciências sociais, crescentemente popular no Brasil, e bastante mais poderosa do que os softwares que estamos acostumados a usar (SPSS, SAS e Stata, por exemplo) nas ciências sociais.
+		\item Já falei que é um software livre e acessível a todo mundo?		
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{O que o curso não é o que não vamos fazer?}
+	Este NÃO é um curso de métodos de pesquisa. Também NÃO é um curso de análise de dados. É um curso de técnica de coleta de dados usando programação em R.
+	\newline\\
+	Nada do que vamos aprender aqui substitui um bom desenho de pesquisa, adequado ao problema de investigação.
+	\newline\\
+	Tampouco é um curso de métodos quantitativos. A coleta massiva de dados pode ser usada com várias finalidades e não tem necessariamente relação com a aplicação de análise matemática ou estatística.
+\end{frame}
+
+\begin{frame}
+	\frametitle{O que o curso não é o que não vamos fazer?}
+	Não vamos aprender outros usos do R - por exemplo, testes de hipóteses, modelos lineares, análise multivariada, etc. Vamos aprender um bocado de R, mas vamos nos limitar ao que é necessário ao curso.
+	\newline\\
+	A boa notícia é que o que é necessário ao curso é o suficiente para você se virar depois autonomamente ou para engatar um curso intermediário de R. Tenho várias recomendações para quem precisar.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Ajustando (um pouco) as expectativas}
+	Temos apenas 15 horas. E vamos fazer um conjunto limitados de atividade. Eles representam soluções bastante comum para vários dos problemas que vocês vão enfrentar nas suas pesquisas.
+	\newline\\
+	Assim, tão importante quanto terminar as atividades, é compreender que tipo de soluções que elas representam e incorporá-las ao seu repertório de soluções.
+	\newline\\
+	A captura de dados da internet tem algo de ``artesanal'' e cada situação é um pouco única. O mais importante é saber que há classes de soluções, adaptáveis a cada situação.  
+\end{frame}
+
+\begin{frame}
+	\frametitle{Ajustando (um pouco) as expectativas}
+	IMPORTANTE: há situações em que pode não ser possível, ou que será muito difícil, capturar os dados.
+	\newline\\
+	Há dados que têm acesso restrito por Lei ou têm interesse comercial e há programadores e desenvolvedores trabalhando justamente para não permitir a captura massica de dados.
+	\newline\\
+	Exemplos:
+	\begin{itemize}
+		\item Sites com captcha, tais como Receita Federal (dados de empresas, Correios (CEPs e logradouros), etc.  
+		\item Dados do facebook (há um pacote para dados do facebook, mas o acesso de qualquer usuário é limitado)
+		\item Sites que impõem limites à captura -- Google Maps e Twitter, que permitem um uso gratuito finito de seus serviços  
+	\end{itemize}
+\end{frame}
+
+\section{Objetivos e Tópicos do curso}
+\begin{frame}
+	\LARGE{Objetivos e Tópicos do curso}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Objetivos}
+	\begin{itemize}
+		\item Introduzir o aluno à linguagem R;
+		\item Fornecer um panorama sobre a construção de sites e de linguagens  de programação utilizadas na internet
+		\item Capacitar o aluno a coletar dados da internet de forma automatizada, via programação de “robôs”.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Tópicos do curso por dia}
+	\begin{enumerate}
+		\item Introdução e captura de tabelas (Portal da Transparência)
+		\item Download de arquivos em massa (TSE) e HTML (Construindo seu site!)
+		\item XML e captura de notícias (Portal de Notícias - Folha? Globo?)
+		\item Preenchimento de formulários (Google!) e pacote RCurl (tópico tenso do curso!)
+		\item Propostas: (Introdução a Machine Learning) ou (Grandes bases de dados no R)
+	\end{enumerate}
+\end{frame}
+
+\section{Materiais, atividades e avaliação}
+\begin{frame}
+	\LARGE{Materiais, atividades e avaliação}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Materiais e atividades}
+	A ideia do curso é que seja extremamente aplicado e que vocês quebrem bastante a cabeça.
+	\newline\\
+	Meu objetivo é falar menos do que falei no ano passado e que vocês trabalhem mais.
+	\newline\\
+	Todos os dias faremos duas atividades, uma tutorada e a outra será por conta própria. Elaborei novos tutoriais para as atividades e vocês devem recorrer a ele durante e após o curso. Eles compõem uma tímida ``apostila'' do curso.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Materiais e atividades}
+	 Assim, dividiremos nosso tempo em quatro:
+	\begin{enumerate} 
+		\item Uma breve exposição do problema e das linguagens que vamos usar durante o dia.
+		\item Uma aplicação em sala, sem o acompanhamento de vocês
+		\item A repetição do exemplo do tutorial (atividades), em duplas ou trios 
+		\item A elaboração de uma atividade de captura de dados semelhante ao exemplo do tutorial, em duplas ou trios 
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Avaliação}
+	A avaliação é composta por duas partes:
+	\begin{enumerate} 
+		\item Participação em sala (40\%)
+		\item Atividade de captura de dados realizada ao final do dia (60\%)
+	\end{enumerate}
+	Basicamente, se vocês vierem 4 ou 5 dias e participarem ativamente do curso partirão de 40\% da nota.Normalmente eu não ligo para presença em cursos, mas, por se tratar de um curso de curta duração e exclusivamente aplicado, a presença em sala de aula é insubstituível. 
+\end{frame}
+
+\begin{frame}
+	\frametitle{Avaliação}
+	As atividades que realizarmos ao final das aulas deverão ser entregues e avaliadas. A entrega da atividade completa, ainda que com ínumeros erros e sem sucesso, por si só garante metade da nota.
+	\newline\\
+	Quero que vocês não se preocupem com entregas de scripts que funcionam, mas em de fato fazerem o melhor que puderem. Assim, quem participar das aulas e entregar tudo já terá 70\% da nota, independentemente de ter obtido êxito na elaboração das atividades ou não.
+	\newline\\
+	Atividades bem elaboradas ganham ``nota cheia''. As datas das entregas das atividades combinaremos ao longo do curso e de acordo com a dificuldade de vocês, tendo como limite os prazos do MQ 2015.
+\end{frame}
+
+\begin{frame}
+	\LARGE{Dúvidas, angústias, críticas, sugestões ou reclamações?}
+\end{frame}
+
+\end{document}
+

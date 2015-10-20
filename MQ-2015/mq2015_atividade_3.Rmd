@@ -1,0 +1,294 @@
+---
+title: "Captura de dados da internet, sistematização o e análise de ”Big data” - Atividade 3"
+author: "Leonardo Sangali Barone e Rogério Jerônimo Barbosa"
+date: "04-08-2015"
+output: pdf_document
+---
+
+# Introdução
+
+Nesta atividade vamos aprender a obter rapidamente dados do Repositório de Dados Eleitorais do Tribunal Superior Eleitoral. Esta é uma tarefa bastante recorrente no trabalho de cientistas políticos e, frequentemente, muito custosa.
+
+Em virtude do tamanho dos arquivos com informações sobre candidatos, partidos, votos, etc, o TSE separa no repositório os arquivos por Estado e compactado. Neste tutorial vamos aprender a criar uma função que recebe como argumento um link do repositório, faz o download, extrai os arquivos da pasta que está em .zip, abre todas as tabelas como data frame e combina os arquivos de todos os Estados em um único. Ao final, vamos ver também como exportar os dados para um único arquivo .csv ou .txt.
+
+```{r}
+options(warn=-1) # Desativa os warnings para não poluir o documento 
+```
+
+# Fazendo download de arquivos pelo R
+
+Podemos fazer download de qualquer arquivo de internet de maneira automática com a função "download.file". Vamos testar a função com um link do repositório do TSE, por exemplo, o arquivo de candidatos nas eleições de 2014. Salvaremos o arquivo com o nome "consulta_cand_2014.zip" no diretório de trabalho atual 
+
+Obs 1: para alterar o diretório de trabalho utilize a função "setwd(C:/etc/etc)"; para saber qual é o diretório de trabalho atual use "getwd()".
+
+Obs 2: Os caminhos de pasta no tutorial provém de um sistema operacional linux e é preciso adaptar os caminhos para Windows/Mac e para as pastas locais de seu próprio computador ("/home/lasagna" é o nome do meu computador e equivale ao "C:/" do Windows).
+
+```{r}
+getwd()
+link <- "http://agencia.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2014.zip"
+download.file(link, "consulta_cand_2014.zip")
+```
+
+Basta ir ao diretório de trabalho que o arquivo estará lá! A função download.file serve a diversos tipos de arquivo e seria muito útil em combinação, por exemplo, com estruturas de loop para fazer o download automático de diversos arquivos de uma páginas ou de um conjunto de páginas. Vamos, ao final deste tutorial, fazer o download dos arquivos de candidatos de todos os anos disponíveis no repositório do TSE a partir de 1994.
+
+Por enquanto, vamos nos concentrar em um único arquivo e aprender a explorar pastas, caminhos de diretórios e arquivos e, finalmente, em combinar automaticamente todas as tabelas.
+
+O primeiro passo, dado que o TSE trabalha com arquivos em formato .zip, é extrair a pasta de dentro do arquivo baixado.
+
+Antes disso, porém, vamos criar uma pasta temporária para onde os arquivos extraídos irão. Podemos fazer isso de dentro do R, sem usar as janelas, mouse e cliques. Vamos criar uma pasta chamada "temp_folder". Comecemos criando um texto simples que representa o endereço da nova pasta, armazenado com o nome de "pasta.temporaria" e a partir da função "file.path", que combina "pedaços" de endereços de pastas: 
+
+```{r}
+pasta.atual <- getwd()
+print(pasta.atual)
+pasta.temporaria <- file.path(getwd(), "temp_folder")
+print(pasta.temporaria)
+```
+
+Com o caminho armazenado em um texto, podemos criar uma pasta com a função "dir.create", tal como no exemplo:
+
+```{r}
+dir.create(pasta.temporaria)
+```
+
+Verifique no seu computador a nova pasta criada. Podemos agora descompactar o arquivo baixado do repositório e enviar o resultado para a pasta temporária:
+
+```{r}
+list.files()
+unzip("consulta_cand_2014.zip", exdir = pasta.temporaria)
+```
+
+No exemplo, a pasta descompactada contém 30 arquivos, um para cada estado, um para as eleições presidenciais ("BR"), um arquivo vazio "ZZ", que não tem utilizadade para candidatos, e um arquivo de layout. Mas como saber o que há na pasta sem sair do ambiente do R? Há uma função chamada "list.files", que lista todos os arquivos em uma pasta. O resultado é um vetor com o nome de todos os arquivos da pasta, em ordem alfabética. Vamos guardar este vetor com o nome "lista.arquivos".
+
+```{r}
+lista.arquivos <- list.files(pasta.temporaria)
+print(lista.arquivos)
+```
+
+Nossa tarefa seguinte é abrir todas os arquivos com dados sobre candidatos, evitando que o arquivo vazio (final "ZZ") e o "LEIAME.pdf" atrapalhem. Como é de se imaginar, por se tratar de uma tarefa de repetição, vamos utilizar uma iteração, com o for loop. Vamos começar com algo bem simples, apenas imprimindo na tela o nome dos arquivos:
+
+```{r}
+for (i in lista.arquivos){
+  print(i)
+}
+```
+
+Novamente vamos tirar proveito da função "file.path" para criar o caminho completo do arquivo e aprimorar nosso loop:
+
+```{r}
+for (i in lista.arquivos){
+  nome.arquivo <- file.path(pasta.temporaria, i)
+  print(nome.arquivo)
+}
+```
+
+Fácil. Mas agora queremos excluir do processo os arquivos que não nos interessam ("ZZ" e "LEIAME.pdf"). Podemos começar a exclusão criando, para cada arquivo, um valor que representa sua extensão (".txt", ".pdf", etc) e criarmos uma condição -- a extensão ser .txt -- para que o arquivo seja considerado no loop. Vamos reutilizar a função "substr" e introduzir, via exemplo, o uso do condicional "if". Veja abaixo:
+ 
+```{r}
+for (i in lista.arquivos){
+  nome.arquivo <- file.path(pasta.temporaria, i)
+  extensao.arquivo <- substr(nome.arquivo, (nchar(nome.arquivo)-2), nchar(nome.arquivo))
+  if (extensao.arquivo == "txt"){
+    print(nome.arquivo)
+  }
+}
+```
+
+Note que agora o arquivo com extensão ".pdf" não teve seu nome impresso na tela. Vamos criar uma exceção semelhante para o arquivo vazio. A estratégia será contar o número de linhas que o arquivo tem e, se ele não contiver mais do que, por exemplo, 9 linhas, vamos decidir não imprimir seu nome. Para contar o número de linhas vamos combinar as funções "readLines", que lê as linhas do arquivo e retorna um vetor, e "length", que retorna o número de linhas em um vetor. Vamos ler apenas 10 linhas e observar se existem pelo menos 10.
+
+```{r}
+for (i in lista.arquivos){
+  nome.arquivo <- file.path(pasta.temporaria, i)
+  extensao.arquivo <- substr(nome.arquivo, (nchar(nome.arquivo)-2), nchar(nome.arquivo))
+  if (extensao.arquivo == "txt"){
+    linhas.arquivo <- length(readLines(nome.arquivo, n=10))
+    if (linhas.arquivo >= 10){
+      print(nome.arquivo)
+    }
+  }
+}
+```
+
+Veja que agora os dois arquivos indesejados não têm seu nome impresso no console e temos uma iteração que percorre exatamente os arquivos dos quais queremos obter as informações. Podemos, então, começar abrir cada um dos arquivos e guardá-los todos no mesmo data frame.
+
+```{r}
+for (i in lista.arquivos){
+  nome.arquivo <- file.path(pasta.temporaria, i)
+  extensao.arquivo <- substr(nome.arquivo, (nchar(nome.arquivo)-2), nchar(nome.arquivo))
+  if (extensao.arquivo == "txt"){
+    linhas.arquivo <- length(readLines(nome.arquivo, n=10))
+    if (linhas.arquivo >= 10){
+      print(nome.arquivo)
+    }
+  }
+}
+```
+
+É fácil alterar o código acima para combinar os arquivos. Vamos começar criando um data frame vazio ("dados"). Depois, vamos inserir logo após o "print" a função "read.table", com os argumentos adequados para o arquivo de candidatos do TSE (por exemplo separador, cabeçalho, aspas, etc -- lembre-se de sempre estudar os arquivos antes de usar a função "read.table"). Por fim, vamos usar "rbind" para combinar os data frames de cada iteração com o data frame vazio. 
+
+Obs: Vamos aproveitar e apagar os arquivos após utilizá-los para esvaziar a pasta temporária e, logo mais, removê-la. Isso evitará erros e sobreposições no futuro.
+
+OBS: o argumento "fileEncoding" depende de cada sistema operacional e também, mas não somente, dos arquivos (no meu caso, estou usando linux).
+
+```{r}
+dados <- data.frame()
+for (i in lista.arquivos){
+  nome.arquivo <- file.path(pasta.temporaria, i)
+  extensao.arquivo <- substr(nome.arquivo, (nchar(nome.arquivo)-2), nchar(nome.arquivo))
+  if (extensao.arquivo == "txt"){
+    linhas.arquivo <- length(readLines(nome.arquivo, n=10))
+    if (linhas.arquivo >= 10){
+      print(nome.arquivo)
+      candidatos <- read.table(nome.arquivo, sep=";", quote="\"",
+                               fill = T, fileEncoding = "latin1", stringsAsFactors = F)
+      dados <- rbind(dados, candidatos)
+    }
+  }
+  file.remove(nome.arquivo)
+}
+file.remove(pasta.temporaria)
+
+```
+
+Vamos agora combinar tudo que foi apresentado neste tutorial -- o download do arquivo, a descompactação, o loop -- em um único código. Nosso objetivo, adiante, será transformar o código em uma função que possamos aplicar a (quase) todos os links do repositório.
+
+```{r}
+getwd()
+link <- "http://agencia.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2014.zip"
+download.file(link, "consulta_cand_2014.zip")
+pasta.atual <- getwd()
+pasta.temporaria <- file.path(getwd(), "temp_folder")
+dir.create(pasta.temporaria) # Se a pasta já existir, haverá uma mensagem de erro
+unzip("consulta_cand_2014.zip", exdir = pasta.temporaria)
+lista.arquivos <- list.files(pasta.temporaria)
+dados <- data.frame()
+for (i in lista.arquivos){
+  nome.arquivo <- file.path(pasta.temporaria, i)
+  extensao.arquivo <- substr(nome.arquivo, (nchar(nome.arquivo)-2), nchar(nome.arquivo))
+  if (extensao.arquivo == "txt"){
+    linhas.arquivo <- length(readLines(nome.arquivo, n=10))
+    if (linhas.arquivo >= 10){
+      print(nome.arquivo)
+      candidatos <- read.table(nome.arquivo, sep=";", quote="\"",
+                            fill = T, fileEncoding = "latin1", stringsAsFactors = F)
+      dados <- rbind(dados, candidatos)
+    }
+  }
+  file.remove(nome.arquivo)
+}
+file.remove(pasta.temporaria)
+```
+
+Antes de avançar, veja se compreendeu todo o código acima.
+
+E se pudessemos criar uma função que, para qualquer link to repositório, retornasse um data frame com os dados dos arquivos das tabelas? Em outras palavras, e se, no lugar de "consulta_cand_2014", pudessemos usar um nome genérico de arquivo gerado a partir de qualquer outro link?
+
+Vamos ver como ficaria o código acima adaptado a uma função, que receberá o nome de "getTse":
+
+
+```{r}
+getTse<-function(link){
+  
+  # Cria um nome temporario que o arquivo baixado recebera
+  pasta.temporaria = file.path(getwd(), "/temp_folder")
+  dir.create(pasta.temporaria)
+  nome.temporario = file.path(pasta.temporaria, "temp")
+  
+  # Faz o donwload do link e armazena arquivo temporario
+  download.file(link, nome.temporario, quiet = T)
+  
+  # Unzip do arquivo temporario
+  unzip(nome.temporario, exdir = pasta.temporaria)
+  
+  # Produz uma lista dos arquivos novos na pasta
+  lista.arquivos <- list.files(pasta.temporaria)
+  
+  # Gera um data frame vazio que será o output da funcao
+  dados <- data.frame()
+  
+  # Loop - para cada i de 1 até o tamanho da lista
+  for (i in lista.arquivos){
+    
+    # Gerar o caminho e nome do arquivo combinando pasta e o arquivo i
+    nome.arquivo <- file.path(pasta.temporaria, i)
+    
+    # Extrai a extensao do arquivo (ultimos 3 caracteres do nome)
+    extensao.arquivo <- substr(nome.arquivo, (nchar(nome.arquivo)-2), nchar(nome.arquivo))
+    
+    # Se extensao do arquivo eh igual a txt, seguir
+    if (extensao.arquivo=="txt"){
+      
+      # Obtem as 10 primeiras linhas do arquivo (se houver)
+      linhas.arquivo <- length(readLines(nome.arquivo, n=10))
+      
+      # Se o numero de linhas for maior que 9, seguir
+      if (linhas.arquivo >= 10){
+        
+        # Abre o arquivo de dados com o nome 'tabela'
+        # Opcoes: separador = ; , quote = " e enconding = latin1
+        tabela <- read.table(nome.arquivo, sep=";", quote="\"",
+                            fill = T, fileEncoding = "latin1", stringsAsFactors = F)
+
+        # Acrescente os dados ao data frame dados.output (empilhar) 
+        dados <- rbind(dados, tabela)        
+      }
+    } 
+    
+    # Remove o arquivo aberto
+    file.remove(nome.arquivo)
+  }
+  # Remove a pasta temporaria
+  file.remove(pasta.temporaria)
+    
+  # Retorna dados.output
+  return(dados)
+}
+```
+
+Veja que, ao gerar a função, nada de novo acontece. Nenhum link foi captura, nenhum arquivo baixado ou descompactado e nenhum data frame gerado. Mas agora temos uma função para aplicar a diversos links do repositório. Vamos pegar nosso link original e aplicar a função a ele, atribuindo o seu resultado ao objeto candidatos_2014
+
+```{r}
+link <- "http://agencia.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2014.zip"
+candidatos_2014 <- getTse(link)
+```
+
+Incrível, não? Você pode repetir o mesmo para vários anos e com poucas linhas de código capturar, abrir, combinar e organizar um conjunto imenso de dados. Pena que as tabelas de anos eleitorais diferentes raramente têm as mesmas colunas, caso contrário poderíamos criar um único data frame de todos os candidatos de todas as eleições.
+
+Mas não vamos parar por aqui. Vamos automatizar a captura de todas as candidaturas desde 1994 (por parcimonia na elaboração do documento executei apenas para 2010 a 2014 e deixei a linha completa como comentário logo acima do for loop). Observe que o link do arquivo é uma função do ano eleitoral. Com um processo de iteração podemos criar os links para cada ano eleitoral e, com a função "getTse" disponível, podemos criar um objeto resultado da aplicação da função a cada link. Para criar automaticamente os links vamos usar a função "paste" (concatenar, tal como vimos na primeira atividade) para criar os links, um nome para cada objeto, e a função assign que cumpre a mesma tarefa que o símbolo "<-", que não faria sentido dentro do processo iterativo pois os nomes dos objetos variam a cada iteração.
+
+Obs: você precisará de uma boa internet -- e da cooperaço do servidor do TSE -- para que não haja nenhuma falha na aplicação. Mas, garanto, funciona.
+
+Obs: você precisará de uma boa internet -- e da cooperaço do servidor do TSE -- para que não haja nenhuma falha na aplicação. Mas, garanto, funciona.
+
+```{r}
+url.base <- "http://agencia.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_"
+
+
+#for (ano in c(1994, 1996, 1998, 2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014)){
+for (ano in c(2010, 2012, 2014)){
+  link <- paste(url.base, ano, ".zip", sep = "")
+  nome.objeto <- paste("candidatos.", ano, sep = "")
+  assign(nome.objeto, getTse(link))
+}
+```
+
+O resultado é impressionante: em poucas linhas de código (apenas aquelas necessárias para criar a função e as demais necessárias para aplicar a função um conjunto de links) podemos baixar um volume grande de dados, prontos para serem organizados e analisados. Vamos ver os objetos criados usando a função "ls":
+
+```{r}
+ls()
+```
+
+
+Uma alternativa mais econômica (sem digitar os anos) seria utilizar a função "while" para gerar um loop. Tente compreendê-la no código abaixo:
+
+```{r}
+url.base <- "http://agencia.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_"
+ano <- 2014
+while (ano >= 2010) {
+  link <- paste(url.base, ano, ".zip", sep = "")
+  nome.objeto <- paste("candidatos.", ano, sep = "")
+  assign(nome.objeto, getTse(link))
+  ano <- ano - 2
+}
+```
+
+

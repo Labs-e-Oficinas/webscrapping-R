@@ -1,0 +1,102 @@
+---
+title: "Captura de dados da internet, sistematização o e análise de ”Big data” - Atividade 6"
+author: "Leonardo Sangali Barone e Rogério Jerônimo Barbosa"
+date: "06-08-2015"
+output: pdf_document
+---
+
+extração de textos de dentro de um pdf. O primeiro passo é instalar e chamar a biblioteca "tm", de text mining, que contém a função readPDF que utilizaremos adiante:
+
+```{r}
+#install.packages("tm")
+library(tm)
+options(warn=-1) # Desativa os warnings para não poluir o documento 
+```
+
+A seguir, vamos baixar do dropbox do curso os arquivos com os quais faremos os testes. Para a atividade gerei em LaTeX arquivos em formato .pdf com formato semelhante aos de um artigo acadêmico escrito em português. Há várias consequências derivadas dessa opção didática. A primeira é que os arquivos .pdf já terão OCR, ou seja, é possível selecionar e marcar o texto do arquivo. Caso o texto contido no arquivo fosse uma imagem, precisaríamos de uma etapa adicional de processamento do arquivo.
+
+A segunda consequência é que construí arquivos propositalmente pequenos e que contêm a informação desejada bastante bem especificada. Esta opção facilitará a realização da atividade, mas é pouco condizente com a realidade. Arquivos em .pdf podem ser demasiadamente grandes e complexos.
+
+A atividade consiste basicamente em baixar a pasta comprimida com os arquivos .pdf, descomprimir, ler o nome dos arquivos na pasta, identificar os arquivos .pdf, extrair todo o texto de dentro deles, selecionar apenas o texto desejado (no caso, os modelos das minhas bicicletas) e guardar a informaçao num vetor.
+
+Em primeiro lugar, criamos uma pasta nova (para receber os arquivos), cujo endereço é gerado com os comandos "file.path" (para juntar textos e produzir um endereço de pasta/arquivo) e "getwd" (que captura o diretório de trabalho atual). Tendo o endereço, usamos "dir.create" para criar a nova pasta.
+
+```{r}
+pasta <- file.path(getwd(), "captura_de_pdf")
+dir.create(pasta)
+```
+
+A seguir, anotamos o link do arquivo .zip no dropbox do curso e salvamos no objeto "link". Também criamos um endereço para este arquivo como "file.path". Com o comando "download.file" baixamos o arquivo em "link" e salvamos com o endereço "arquivo.zip":
+
+```{r}
+link <- "https://www.dropbox.com/s/urwwi16a2bvzcrl/captura_de_pdf.zip?dl=0"
+arquivo.zip <- file.path(pasta, "temp.zip")
+download.file(link, arquivo.zip, method = "wget")
+```
+
+"Unzip" é o comando que utilizamos para extrair os arquivos de dentro do .zip. A opção "exdir" indica para onde vão os arquivos baixados (no caso, a pasta recém criada).
+
+```{r}
+unzip(arquivo.zip, exdir = pasta)
+```
+
+Com os arquivos na pasta recém criada, vamos ler o nome de todos os arquivos nela contida com "list.files" e selecionar, usando a função "grep" apenas aqueles que terminem em .pdf (os demais arquivos são o próprio .zip e os arquivos .tex que geraram os .pdf - estão na pasta de propósito, para atrapalhar)
+
+```{r}
+lista.arquivos <- list.files(pasta)
+lista.arquivos <- grep(".pdf", lista.arquivos, value = T)
+```
+
+Excelente! Já temos uma lista com o nome de todos os arquivos e sabemos que eles estão dentro da pasta recém criada. Vamos examinar, então, como extrair o texto do primeiro arquivo e, uma vez que este processo funcionar, vamos repetí-lo para todos no vetor "lista.arquivos". A função central para extrair o texto é readPDF (veja como funciona abaixo -- ainda estou explorando e compreendendo).
+
+```{r}
+arquivo <- file.path(pasta, lista.arquivos[1])
+texto <- readPDF(control = list(text = "-layout"))(elem = list(uri = arquivo),
+                                                     language = "pt", id = "id1")
+class(texto)
+texto <- as.character(texto)
+```
+
+Após aplicarmos a função readPDF obtemos um objeto com duas classes: "PlainTextDocument" e "TextDocument". Para torná-lo um vetor simples com textos provenientes do arquivo .pdf  usamos a função "as.character". Observe abaixo o resultado:
+
+```{r}
+print(texto)
+```
+
+A informação que queremos aparece na linha 10. Mas poderíamos ter a informação em qualquer linha, caso os documentos não fossem semelhantes entre si. Usaremos, então, uma regularidade nos textos dos arquivos -- o trecho "Biclicleta:" para selecionar apenas as linhas desejadas (tal como fizemos com páginas de html antes de usar o pacote "XML"):
+
+```{r}
+texto <- grep("Bicicleta", texto, value = T)
+print(texto)
+```
+
+Novamente aproveitando a regularidade do texto, extraímos apenas a informação o 11o. caracter:
+
+```{r}
+texto <- substr(texto, 12, nchar(texto))
+```
+
+Pronto, já temos o processo de captura bem estruturado para esta informação neste conjunto de documentos. Note que sem uma regularidade do texto teríamos muita dificuldade em capturar a informação e precisaríamos de estratégias bastante mais complexas.
+
+Vamos agora capturar a informação sobre os modelos das bicicletas nos cinco documentos .pdf e guardá-la no vetor "bicicleta". A estrutura do processo iterativo é exatamente a mesma que utilizamos em outros exemplos de captura de dados.
+
+```{r}
+bicicletas <- c()
+for (i in lista.arquivos){
+  arquivo <- file.path(pasta, i)
+  print(i)
+  texto <- readPDF(control = list(text = "-layout"))(elem = list(uri = arquivo),
+                                                     language = "pt", id = "id1")
+  texto <- as.character(texto)
+  texto <- grep("Bicicleta", texto, value = T)
+  texto <- substr(texto, 12, nchar(texto))
+  bicicletas <- c(bicicletas, texto)
+}
+```
+
+Vejamos o resultado:
+
+```{r}
+print(bicicletas)
+```
+
