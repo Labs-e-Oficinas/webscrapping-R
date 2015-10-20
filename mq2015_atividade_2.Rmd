@@ -1,0 +1,200 @@
+---
+title: "Captura de dados da internet, sistematização o e análise de ”Big data” - Atividade 2"
+author: "Leonardo Sangali Barone e Rogério Jerônimo Barbosa"
+date: "04-08-2015"
+output: pdf_document
+---
+
+# Introdução
+
+Uma página de HTML, como vimos em sala de aula, é um texto. Ela contém as tags características da linguagem HTML e o conteúdo que compõem a página (que, por sua vez, é organizado e lido pelo seu navegador de maneira correta graças às tags).
+
+Na primeira atividade, utilizamos a função "readHTMLTable", do pacote "XML", que resolvia nosso problema, capturando apenas o conteúdo interno às tags <table> e retornava uma lista de todas as tabelas presentes na página.
+
+Nesta ativividade vamos aprender a ler todo o conteúdo da página e explorá-lo com as funções da biblioteca básica do R e expressões regulares.
+
+# Lendo uma pagina de html no R e aprendendo a "limpá-la"
+
+Nesta atividades vamos aprender algumas novas funções extremamente úteis para extraírmos informações que estão contidas em um texto. E, como uma página escrita em HTML é um texto, vamos usar tais funções para limpá-los.
+
+Vamos começar com a primeira página da lista de servidores federais proveniente do portal da transparência. Tal como na atividade anterior, vamos armazenar o link da página em um objeto (veja que utilizei o link completo, que se obtém após avançar para página 2 e voltar par aa página 1. O link completo está abaixo, caso não seja possível vizualizar no código de R):
+
+"http://www.portaltransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina=1"
+
+```{r}
+baseurl <- "http://www.portaltransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina=1"
+options(warn=-1) # Desativa os warnings para não poluir o documento 
+```
+
+Seja um data frame, seja uma página de HTML, o R é capaz de ler objetos diretamente da web. O link funciona como se fosse um endereço de uma arquivo no seu computador. A função de R que lê um arquivo de texto é "readLines". Veja como ela funciona abaixo. Além disso, vamos examinar qual é a classe do resultado (função "class") e a estrutura do objeto gerado (função"str").
+
+```{r}
+pagina <- readLines(baseurl)
+class(pagina)
+str(pagina)
+```
+
+A função "readLines" retorna um vetor do tipo "character" de tamanho 586! Isso significa que cada linha da página está em uma posição no vetor. Se quisermos, podemos usar colchetes para explorar este vetor (lembre-se que para vetores usamos apenas um colchete "[]" e para listas usamos 2 "[[]]"). Por exemplo, para ver a linha 297:
+
+```{r}
+pagina[297]
+```
+
+Ou, para vizualizarmos da linha 297 à linha 315:
+
+```{r}
+pagina[297:315]
+```
+
+Ou se quisermos apenas as linhas 297 e 310:
+
+```{r}
+pagina[c(297, 310)]
+```
+
+Interessante, não? Imagine agora se você pudesse escolher apenas as linhas que contém o nome do servidor. Como seria possível fazer isso? Uma das maneiras -- a mais "bruta" delas -- é encontrar alguma regularidade do texto que apareça somente (ou "quase" somente) nas linhas que nos interessam. Por exemplo, na página com a qual trabalhamos o texto "IdServidor" aparece na linha que nos interessa. Usaremos a função "grep" para buscar as linhas que contém apenas esse texto. Veja o uso desta função:
+
+```{r}
+grep("IdServidor", pagina)
+```
+
+
+Note que interessante: o resultado é exatamente um vetor de números com a posição das linhas que contém "IdServidor" na página! Veja como podemos combinar o resultado da função "grep" com os colchetes para explorar as linhas da página com a qual estamos trabalhando:
+
+```{r}
+pagina[grep("IdServidor", pagina)]
+```
+
+ou:
+
+```{r}
+linhas.servidores <- grep("IdServidor", pagina)
+pagina[linhas.servidores]
+```
+
+Excelente!!! Temos agora todas e apenas as linhas que contém nomes dos servidores!Note que as linhas com os CPFs (com dígitos omitidos para preservar a privacidade destas pessoas) ou as linhas com as informações sobre órgão de lotação, órgão de exercício ou jornada de trabalho estão bastante próximas das linhas com o nome do servidor (isso acontecerá em todas as tabelas de HTML!). Se quisermos obter, em vez das linhas com os nomes dos servidores, as linhas com os nomes dos órgãos de exercício (2 abaixo do nome) ou dos CPFs (uma acima do nome), poderíamos fazer uma operação bastante simples com o vetor de linhas obtido pela função "grep":
+
+```{r}
+pagina[linhas.servidores + 2]
+pagina[linhas.servidores - 1]
+```
+
+Pronto, já temos os dados? Ainda não. A informação que temos ainda está repleta de "sujeira", pois foi retirada de maneira bastante bruta do texto em HTML. Temos, portanto, que "limpar" estas linhas. Vamos iniciar guardando as linhas, por exemplo, do CPF, em um vetor.
+
+```{r}
+cpf <- pagina[linhas.servidores - 1]
+```
+
+Veja que as linhas que contêm o CPF têm tamanho fixo, e que os CPFs estão sempre na mesma posição (nem sempre isso acontecerá, como já veremos). Podemos extrair os CPFs destas linhas usando uma função bastante comum também em outras linguagens ou editores de planilha, que é "substr" (do inglês "substring"):
+
+```{r}
+substr(cpf, 34, 47)
+```
+
+Podemos repetir o mesmo procedimento para os demais campos da tabela. Há um problema, porém: cada linha tem um número diferente de caracteres, que varia de acordo com o tamanho do nome, órgão, etc. Temos que extrair a informação levando em conta essa variação. Para isso, vamos fazer uso de mais uma função, chamada "nchar", e que retorna o número de caracteres em um texto. Exemplo:
+
+```{r}
+nome <- pagina[linhas.servidores]
+nchar(nome)
+```
+
+Sabemos, agora, o tamanho de cada linha. Se contarmos os caracteres, veremos que os nomes começam sempre no caracter 74 e que os 8 últimos caracteres da linha não são parte do nome. Combinando a função "substr" com a função "nchar" podemos extrair apenas os nomes (e os espaços excedentes, mas não vamos entrar neste tópico agora):
+
+```{r}
+substr(nome, 74, nchar(nome) - 9)
+```
+
+Uma alternativa ao que acabamos de fazer seria. Tente ler e entender. (Dica: primeiro aplicamos a função "substr" para retirar os primeiros 73 caracteres do texto de cada linha e, após, substituímos a expressão "</a></td>" por vazio):
+
+```{r}
+gsub("</a></td>", "", substr(nome, 74, nchar(nome)))
+```
+
+Excelente! As funções com as quais trabalhamos até agora nesta atividade são parte daquilo que se denomina "expressões regulares". Para extrair do meio de um monte de códigos informações úteis adotamos expressões que, a partir de regularidades no texto, ajudam a localizar e "limpar" tais informações.
+
+Há tutoriais online que ensinam a trabalhar com expressões regulares. Antes de seguir com a leituras deste material, convém perder alguns minutos procurando por "regular expressions" na internet e também ler o arquivo de "help" do R digitando no console "?grep". Um site bastante útil para aprender sobre e criar expressões regulares é http://www.regexr.com/. Seria bastante útil para este curso termos algum domínio sobre expressões regulares, mas este é o típico conhecimento que se aprende praticando, consultando o que outros fizeram e errando muito.
+
+Vamos terminar de obter todos os dados da tabela desta primeira página aplicando a mesma tática de "limpeza" para todos os campos de uma só vez:
+
+```{r}
+# CPF
+cpf <- pagina[linhas.servidores - 1]
+cpf <-substr(cpf, 34, 47)
+
+# Nome
+nome <- pagina[linhas.servidores]
+nome <- substr(nome, 74, nchar(nome) - 9)
+
+# Órgão de lotação
+orgao.lotacao <- pagina[linhas.servidores + 1]
+orgao.lotacao <- substr(orgao.lotacao, 41, nchar(orgao.lotacao) - 5)
+
+# Órtão de Exercício
+orgao.exercicio <- pagina[linhas.servidores + 2]
+orgao.exercicio <- substr(orgao.exercicio, 41, nchar(orgao.exercicio) - 5)
+
+# Jornada de Trabalho
+jornada <- pagina[linhas.servidores + 3]
+jornada <- substr(jornada, 42, nchar(jornada) - 5)
+```
+
+Temos agora 5 vetores, cada um contendo a informação de uma das colunas da tabela da página com os servidores federais. Constuir um data frame com os cinco vetores é bem simples:
+
+```{r}
+tabela <- data.frame(cpf, nome, orgao.lotacao, orgao.exercicio, jornada)
+```
+
+Temos a tabela completa de uma página extraindo a informção diretamente do texto em HTML e usando expressões regulares. Falta apenas um último passo, bastante simples se você entendeu bem o tutorial da atividade passada: extrair tabelas das 70.761 páginas! Vamos usar um for loop. Tenho certeza que a essa altura do campeonato você já consegue entender o código abaixo e criar um exemplo com outras informações do Portal da Transparência:
+
+```{r}
+# Cria url base
+baseurl <- "http://www.portaltransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina=XX"
+
+# Cria um data frame vazio para receber as tabelas
+dados.servidores <- data.frame()
+
+for (i in 1:5) {
+  
+  # Contador
+  print(i) 
+  
+  # Cria URL da i-ésima página
+  url <- gsub("XX", i, baseurl)
+  
+  # Lê o conteúdo da página
+  pagina <- readLines(url)
+  
+  # Seleciona apenas as linhas que contêm o texto "IdServidor"
+  linhas.servidores <- grep("IdServidor", pagina)
+  
+  # CPF
+  cpf <- pagina[linhas.servidores - 1]
+  cpf <-substr(cpf, 34, 47)
+  
+  # Nome
+  nome <- pagina[linhas.servidores]
+  nome <- substr(nome, 74, nchar(nome) - 9)
+
+  # Órgão de lotação
+  orgao.lotacao <- pagina[linhas.servidores + 1]
+  orgao.lotacao <- substr(orgao.lotacao, 41, nchar(orgao.lotacao) - 5)
+
+  # Órtão de Exercício
+  orgao.exercicio <- pagina[linhas.servidores + 2]
+  orgao.exercicio <- substr(orgao.exercicio, 41, nchar(orgao.exercicio) - 5)
+
+  # Jornada de Trabalho
+  jornada <- pagina[linhas.servidores + 3]
+  jornada <- substr(jornada, 42, nchar(jornada) - 5)  
+
+  # Cria um data frame com os vetores coluna
+  tabela <- data.frame(cpf, nome, orgao.lotacao, orgao.exercicio, jornada)
+  
+  # Adiciona tabela ao data frame "dados.servidores"
+  dados.servidores <- rbind(dados.servidores, tabela)
+}
+
+head(dados.servidores)
+
+```
+

@@ -1,0 +1,120 @@
+\documentclass[11pt]{beamer}
+\usepackage{beamerthemesplit}
+\usepackage[brazilian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\let\oldemptyset\emptyset
+\let\emptyset\varnothing
+
+\title{Captura de dados da internet, sistematização o e análise de ”Big data”}
+
+\subtitle{Aula 4}
+
+\author[Leonardo Sangali Barone]{Leonardo Sangali Barone\\MQ 2015 - UFMG}
+\date[06 de Agosto de 2015]{06 de Agosto de 2015}
+
+\begin{document}
+\frame{\titlepage}
+
+\section{Limitações do R como Web Client}
+
+\begin{frame}
+	\frametitle{Limitações do R como Web Client}
+	R fornece funcionalidades básicas bastante adequadas para obtenção de 		dados via HTTP.
+	\newline\\
+	Entretanto, as funções básicas não permitem controlar aspectos essenciais 		do uso de HTTP.
+	\newline\\
+	Vejamos algumas das limitações.
+\end{frame}
+
+\begin{frame}
+	\frametitle{Limitações do R como Web Client}
+	\begin{itemize}
+		\item há um número grande outros protocolos de comunicação via web 			(HTTPS, FTP, FTPS, etc) além de HTTP.
+		\item não contempla funcionalidades básicas como postar em 
+		formulários.
+		\item não é possível fazer upload de arquivos (por exemplo, em FTP).
+		\item não permite obtenção de dados disponibilizados via HTTPS, que é 			uma variação mais segura do protocolo HTTP (encriptação) bastante 			utilizada (ex: Google).
+	\end{itemize}
+\end{frame}
+
+\section{RCurl}
+
+\begin{frame}
+	\frametitle{RCurl}
+	RCurl é um pacote desenvolvido para superar tais limitações.
+	\newline\\
+	RCurl utiliza uma biblioteca em linguagem C (libcurl) para executar
+	funções de Web Client.
+	\newline\\
+	Curl = ``Client for URL Resources''
+	\newline\\
+	Funções principais: getURL(), getForm() e postForm().
+\end{frame}
+
+\begin{frame}
+	\frametitle{RCurl - funções}
+	getURL(): semelhante às funções download.url() ou readLines(), com a 		qual havíamos trabalho até então, serve para a obtenção de conteúdo 	
+	(normalmente o corpo da página HTML) via HTTP.
+	\newline\\
+	Exemplo:page = getURL(``http://www.fafich.ufmg.br/'')
+\end{frame}
+
+\begin{frame}
+	\frametitle{RCurl - funções}
+	Adicionalmente, getURL também recebe como argumento um vetor de URLs e 		retorna uma lista com seus conteúdos.
+	\newline\\
+	Exemplo: page = getURL(c(url1, url2, url3))
+\end{frame}
+
+\begin{frame}
+	\frametitle{RCurl - funções}
+	A função getURL() contém diversas opções para se adequar ao tipo de
+	protocolo requisitado e às características do Web server.
+	\newline\\
+	Exemplo: para páginas em que há ``redirecionamento'', podemos usar a opção
+	followlocation = TRUE
+	\newline\\
+	page = getURL(url, followlocation = TRUE)
+\end{frame}
+
+\begin{frame}
+	\frametitle{RCurl - funções}
+	Há mais uma centena de opções atualmente para cutomizar os resquests  que
+	a função getURL a um Web server.
+	\newline\\
+	names(getCurlOptionsConstants())
+\end{frame}
+
+\begin{frame}
+	\frametitle{RCurl - funções}
+	E se a URL não existir?
+	\newline\\
+	A função url.exists() retorna TRUE ou FALSE e indica se a URL existe e, 	portanto, podemos capturá-la. Esta função é particularmente útil quando 	usamos um loop para obter o conteúdo de vários URLs ao mesmo tempo.
+	followlocation = TRUE
+	\newline\\
+	Exemplo:\\
+	url.exists(``http://www.urlfalsa.gov.ar'')\\
+	$[1]$ FALSE
+\end{frame}
+
+\begin{frame}
+	\frametitle{RCurl - funções}
+	getForm() e postForm(): Ambas funções servem para submetermos documentos 
+	de HTML via HTTP com a finalidade de capturar seu resultado. São usadas 
+	sobretudo com formulários.
+\end{frame}
+
+\begin{frame}
+	\frametitle{RCurl - funções}
+	Formulários: menus, checkboxes, caixas de rolagem e etc. Permite ao 
+	usuários definir valores para variáveis .
+	\newline\\
+	Exemplos de formulários: buscador Google, consulta de CEP nos correios 
+	ou de municípios no IBGE.
+\end{frame}
+
+\end{document}
+
+
