@@ -1,0 +1,208 @@
+---
+title: "Oficina de captura de dados da internet usando R - Atividade 1"
+author: "Leonardo Sangali Barone"
+date: "28-10-2015"
+output: pdf_document
+---
+
+# Pacotes no R
+
+Algumas das funções que vamos utilizar nesta atividade não estão na biblioteca básica do R. Temos, dessa forma, que começar instalando uma biblioteca chamada "XML". A biblioteca já está instalada nos computadores que vamos utilizar hoje. Porém, vamos refazer o processo de instalação para aprender um pouco mais. Execute o comando abaixo:
+
+```{r}
+#install.packages("XML")
+```
+
+Uma vez instalada a biblioteca, as funções não estão automaticamente disponíveis. Para torná-las disponíveis é preciso "chamar" a biblioteca. Vamos fazer isso com a biblioteca "XML". Execute o comando abaixo:
+
+```{r}
+library(XML)
+```
+
+Excelente! Já temos as funções que precisamos disponíveis na nossa sessão. Vamos utilizá-las logo mais.
+
+# Atividade inicial - Servidores no Portal da Transparência
+
+## For loop e links com numeração de página
+
+Vamos começar visitando o site portal da transparencia: http://www.portaldatransparencia.gov.br/ No site, vamos explorar os dados sobre servidores públicos federais. Clique na aba "Servidores" e escolha "por nome ou CPF". São 70.629 páginas contendo 15 servidores cada.
+
+```{r}
+70629 * 15 
+```
+
+São 1.059.435 servidores ao todo!!!! Temos a informação de alguns dígitos do CPF, nome, orgão de lotação, orgão de exercício e jornada de trabalho. Todas essas informacoes são públicas!
+
+Nossa primeira atividade consiste em capturar estas informações. Vamos, no decorrer da atividade aprender bastante sobre R, objetos, estruturas de dados, loops e captura de tabelas em HTML
+
+Em primeiro lugar, vamos copiar o link do portal da transparência. Veja que o link (exceto na página 1) termina com o número da página, dentre as mais de 70 mil, que estamos visitando. Vamos armazenar em um objeto ("baseurl", mas você pode dar o nome que quiser) este link sem a numeração da página:
+
+Obs: o programa que utilizei para editar esta atividade não permite vizualizar linhas de código muito longa, então, se precisar do link, use este abaixo:
+
+http://www.portaldatransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina=
+
+```{r}
+baseurl <- "http://www.portaldatransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina="
+```
+
+Nosso primeiro desafio consiste em produzir automaticamente os 70 mil links, inserindo um número ao final do objeto onde o armazenamos. Antes, porém, conhecer uma função essencial em qualquer linguagem de programação, o "for loop". Loops são processos iterativos e são extremamente úteis para instruir o computador a repetir uma tarefa por um número finito de vezes. Por exemplo, vamos começar "imprimindo" na tela os números de 1 a 9:
+
+```{r}
+for (i in 1:9) {
+  print(i)
+}
+```
+
+Simples, não? Vamos ler esta instrução da seguinte maneira: "para cada número i no conjunto que vai de 1 até 9 (essa é a parte no parênteses) imprimir o número i (instrução entre chaves)". E se quisermos imprimir o número i multiplicado por 9 (o que nos dá a tabuada do 7!!!), como devemos fazer?
+
+```{r}
+for (i in 1:9) {
+  print(i * 7)
+}
+```
+
+Tente agora construir um exemplo de loop que imprima na tela os números de 3 a 15 multiplicados por 10 como exerício.
+
+Ótimo! Já temos alguma intuição sobre como loops funcionam. A essa altura já deve ser possível imaginar como vamos fazer para criar os 70 mil links, um para cada página com 15 servidores. O que nos falta é uma função que nos permita juntar o texto básico do link ("baseurl") com os números das páginas. Esta função chama-se "paste" e veja como ela funciona abaixo (a função "paste" costuma ser traduzida como "concatenar" em português):
+
+```{r}
+texto1 <- "O texto começa aqui."
+texto2 <- "O final do texto está aqui."
+texto.completo <- paste(texto1, texto2, sep = " ")
+print(texto.completo)
+```
+
+Com a função "paste" podemos juntar quantos textos quisermos. O argumento "sep" permite escolher o que separará os textos (no nosso caso inserimos apenas um espaço entre os parênteses, mas, em vários momentos, vamos apenas abrir e fechar aspas para indicarmos que não queremos nada separando os textos).
+
+Podemos produzir os links combinando facilmente o começo ("baseurl") com o número i. Por exemplo, para produzirmosa página 42 fazemos: 
+
+```{r}
+baseurl <- "http://www.portaldatransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina="
+i = 42
+url <- paste(baseurl, i, sep = "")
+print(url)
+```
+
+Esta será a instrução que colocaremos entre chaves dentro do nosso loop para que, do i 1 ao 70.761 possamos obter os links de cada uma das páginas. Para ilustrarmos, os 5 primeiros links podem ser produzidos da seguinte maneira:
+
+```{r}
+baseurl <- "http://www.portaldatransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina="
+for (i in 1:5) {
+  url <- paste(baseurl, i, sep = "")
+  print(url)
+}
+```
+
+Muito mais simples do que parece, não? Mas veja bem, até agora tudo que fizemos foi produzir um texto que, propositalmente, é igual ao endereço das páginas cujo conteúdo nos interessa. Porém, ainda não acessamos o seu conteúdo. Precisamos, agora, de funções que façam algo semelhante a um navegador de internet, ou seja, que se comuniquem com o servidor da página e receba o seu conteúdo.
+
+Ao longo do curso vamos explorar um pouco estas funções. Por enquanto, vamos usar apenas a função "readHTMLTable", contida na biblioteca "XML" (lembra que chamamos esta biblioteca lá no começo da atividade?). Esta função serve bem ao nosso caso: ela recebe uma url como argumento e captura todas as tabelas da url, escritas em HTML, e retorna uma lista contendo as tabelas. Vamos ver como ela funciona para a página 42 das 70 mil páginas contendo tabelas com nomes de servidores:
+
+```{r}
+baseurl <- "http://www.portaldatransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina="
+i <- 1
+url <- paste(baseurl, i, sep = "")
+tabela <- readHTMLTable(url)
+print(tabela)
+```
+
+Um detalhe fundamental do resultado da função readHTMLTable é que o resultado dela é uma lista. Por que uma lista? Porque pode haver mais de uma tabela na página e cada tabela ocupará uma posição na lista. Para o R, uma lista pode combinar objetos de diversas classes: vetores, data frames, matrizes, etc. No portal da transparência, por exemplo, com certa frequência as páginas têm duas tabelas, uma com informações gerais sobre o tema e outra com informações das unidades (convênios, servidores, municípios, etc).
+
+Como acessar objetos em uma lista? Podemos ulitizar colchetes. Porém, se utilizarmos apenas um colchete, estamos obtendo uma sublista. Por exemplo, vamos criar diferentes objetos e combiná-los em uma lista:
+
+```{r}
+# Objetos variados
+matriz <- matrix(c(1:6), nrow=2)
+vetor.inteiros <- c(42:1)
+vetor.texto <- c("a", "b", "c", "d", "e")
+vetor.logico <- c(T, F, T, T, T, T, T, T, F)
+texto <- "meu querido texto"
+resposta <- 42
+
+# Lista
+minha.lista <- list(matriz, vetor.inteiros, vetor.texto, vetor.logico, texto, resposta)
+print(minha.lista)
+```
+
+Para produzirmos uma sublista, usamos um colchete (mesmo que a lista só tenha um elemento!):
+
+```{r}
+print(minha.lista[1:3])
+class(minha.lista[1:3])
+print(minha.lista[4])
+class(minha.lista[4])
+```
+
+Se quisermos usar o objeto de uma lista, ou seja, extraí-lo da lista, devemos usar dois colchetes:
+
+```{r}
+print(minha.lista[[4]])
+class(minha.lista[[4]])
+```
+
+Ao obter as tabelas de uma página como uma lista de tabelas (nem sempre vai parecer que são tabelas, exceto se você entender um pouco de HTML), devemos, portanto, utilizar dois colchetes para extrair a tabela que queremos (para poder combiná-las com as tabelas das demais páginas, algo que faremos ao final). Exemplo (no nosso caso já sabemos que a tabela que queremos ocupa a posição 1 da lista, mas é necessário examinar sempre):
+
+```{r}
+baseurl <- "http://www.portaldatransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina="
+i <- 1
+url <- paste(baseurl, i, sep = "")
+lista.tabelas <- readHTMLTable(url)
+tabela <- lista.tabelas[[1]]
+print(tabela)
+class(tabela)
+```
+
+Agora podemos combinar tudo que vimos: loop, concatenar ("paste"), captura de tabelas em HTML e listas. Vamos capturar as tabelas das cinco primeiras páginas contendo servidores federais no Portal da Transparência. Para podermos saber que estamos capturando, vamos usar a função "head", que retorna as 6 primeiras linhas de um data frame, e a função "print":
+
+```{r}
+baseurl <- "http://www.portaldatransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina="
+for (i in 1:5) {
+  url <- paste(baseurl, i, sep = "")
+  lista.tabelas <- readHTMLTable(url)
+  tabela <- lista.tabelas[[1]]
+  print(head(tabela))
+}
+```
+
+Vamos traduzir o que estamos fazendo: "para cada i de 1 a 5, vamos criar um link que é a combinação da URL base ("baseurl") com i, vamos usar esta combinação ("url") como argumento da função readHTMLTable e vamos imprimir as 6 primeiras linhas de cada tabela".
+
+Excelente, não? Mas e aí? Cadê os dados? O problema é que até agora ainda não fizemos nada com os dados, ou seja, ainda não guardamos eles em novos objetos para depois podermos utilizá-los na análise. Neste último passo, vamos fazer o seguinte: começaremos com um data frame vazio ("dados") e, para cada iteração no nosso loop (ou seja, para cada "i"), vamos inserir a tabela da página i como novas linhas no nosso data frame. A função nova que precisamos se chama "rbind". Vejamos um exemplo antes de avançar:
+
+```{r}
+# Criando 2 data frames separados
+meus.dados1 <- data.frame("id" = 1:10, "Experimento" = rep(c("Tratamento"), 5))
+print(meus.dados1)
+meus.dados2 <- data.frame("id" = 11:20, "Experimento" = rep(c("Controle"), 5))
+print(meus.dados2)
+
+# Combinando os dois data.frames
+meus.dados.completos <- rbind(meus.dados1, meus.dados2)
+print(meus.dados.completos)
+```
+
+Pronto. Podemos agora criar um data frame vazio ("dados") e preenchê-lo com os dados capturados em cada iteração. O resultado final será um objeto com todos as tabelas de todas as páginas capturadas, que é o nosso objetivo central. Novamente vamos trabalhar apenas com as cinco primeiras páginas, mas bastaria alterar um único número para que o processo funcionasse para as 70.761 páginas - desde que sua conexão de internet e a memória RAM do seu computador sejam boas! (Obs: vamos inserir um "contador" das páginas capturadas com "print(i)". Isso será muito útil quando quisermos capturar um número grande de páginas. Além disso, incluímos o argumento "stringsAsFactors = FALSE" na função readHTMLTable para garantir que as variáveis de texto sejam lidas como "character" e não como  "factors").
+
+```{r}
+baseurl <- "http://www.portaldatransparencia.gov.br/servidores/Servidor-ListaServidores.asp?bogus=1&Pagina="
+dados <- data.frame()
+for (i in 1:5) {
+  print(i)
+  url <- paste(baseurl, i, sep = "")
+  lista.tabelas <- readHTMLTable(url, stringsAsFactors = FALSE)
+  tabela <- lista.tabelas[[1]]
+  dados <- rbind(dados, tabela)
+}
+```
+
+Vamos observar o resultado utilizando a função "str", que retorna a estrutura do data frame, e tail, que é como a função "head", mas retorna as 6 últimas em vez das 6 primeiras observações.
+
+São 75 observações (5 páginas com 15 pessoas) e 5 variáveis (CPF, nome, órgão de lotação, órgão de exercício e jornada de trabalho), exatamente como esperávamos. As 5 variáveis são do tipo "character" contêm as informações corretas. As 6 observações apresentam o resultado adequado, o que nos dá uma boa dica que que tudo ocorreu bem até a última página capturada.
+
+```{r}
+# Estrutura do data frame
+str(dados)
+
+# 6 últimas observações
+tail(dados)
+```
+
+Pronto! Conseguimos fazer nossa primeira captura de dados. Se quiser, você pode repetir o procedimento para pegar as 70 mil páginas (eu recomendaria fazer a captura por partes, por exemplo, de 10 mil páginas e depois agrupar tudo se estiver usando um computador doméstico) ou reproduzir o mesmo processo para capturar outras informações do Portal da Transparência. 

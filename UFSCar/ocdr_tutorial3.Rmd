@@ -1,0 +1,108 @@
+---
+title: "Oficina de captura de dados da internet usando R - Atividade 3"
+author: "Leonardo Sangali Barone"
+date: "28-10-2015"
+output: pdf_document
+---
+
+Nesta atividade vamos utilizar o nosso conhecimento sobre o pacote XML para continuar a atividade anterior e, desta vez, capturar não apenas os links e títulos de notícias em um portal, mas também o conteúdo de cada link. Vamos começar, como de costume, chamando as bibliotecas que iremos utilizar (incluí a biblioteca RCurl, desta vez, para usar "getURL" em vez de "readLines").
+
+```{r}
+library(XML)
+options(warn=-1) # Desativa os warnings para não poluir o documento 
+```
+
+Vamos repetir a caputra da busca dos links de todas as matérias do portal do jornal Folha de São Paulo. Desta vez, porém, não precisaremos dos títulos e resumo da notícia, apenas dos links. Vamos criar um vetor chamado "links.folha" que contém todos os links capturados.
+
+É importante observar que o link do site de busca da folha não varia de acordo com o número da página, mas sim com os números das notícias. A segunda página, portanto, começa a partir do número 26. São ao todo 826 notícias, sendo 25 por página e 34 páginas ao todo.
+
+Com base na atividade anterior, tente compreender o código abaixo:
+
+```{r}
+url.folha <- "http://search.folha.com.br/search?q=marco%20civil%20da%20internet&site=online&sr="
+links.folha = c()
+for (i in 1:34){
+  i = (i - 1) * 25 + 1
+  print(i)
+  url <- paste(url.folha, i, sep = "")
+  pagina <- readLines(url)
+  folha <- htmlParse(pagina)
+  folha <- xmlRoot(folha)
+  links <- getNodeSet(folha,"//h3[@class='search-results-title']/a")
+  links <- xmlSApply(links, xmlGetAttr, name = "href")
+  links <- unlist(links)
+  links.folha <- c(links.folha, links)
+}
+```
+
+Uma vez que coletamos os 826 links, podemos usá-los para a captura das notícias individuais. Nossa estratégia será bastante simples: aprenderemos como fazer a captura da página da primeira notícia e, uma vez bem implementada, faremos a captura de todas as notícias possíveis.
+
+É importante observar que quando capturamos um período longo de tempo corremos o risco dos desenvolvedores da página terem alterado seu formato e, portanto, as tags, atributos e valores. No nosso caso, por exemplo, conseguiremos capturar apenas 498 das 826 notícias. Seria prudente, em algum momento, examinar quais são as primeiras notícias não capturadas e criar um script separado para elas.
+
+Capturar uma página de notícia requer a adoção da mesma estratégia que utilizamos na página de bucas. Começamos observando o código fonte da página da notícia para identificar quais são os nodes, atributos e respectivos valores que nos interessam.
+
+Em primeiro lugar, porém, vamos capturar toda a página da primeira notícia da busca, vamos transformar o objeto em um conjunto de nodes de XML e retirar o conteúdo exterior à tag <html>:
+
+```{r}
+pagina <- readLines(links.folha[1])
+noticia <- htmlParse(pagina)
+noticia <- xmlRoot(noticia)
+```
+
+Vamos agora inspecionar o elemento, no próprio navegador, para observar em que tag está o conteúdo do título da notícia. Rapidamente verificaremos que se trata de uma tag "h1", como atributo "itemprop" que, por sua vez, recebe o intuitivo valor "headline". O resultado é um conjunto de nodes com apenas um node e podemos rapidamente aplicar a combinação de funções "xmlSApply" e xmlValue:
+
+```{r}
+titulo <- getNodeSet(noticia,"//h1[@itemprop='headline']")
+titulo <- xmlSApply(titulo, xmlValue)
+```
+
+No caso específico das notícias do portal do jornal Folha de São Paulo, todos os elementos que queremos capturar são conteúdos em tags (e não valores de atributos, como acontece em outros portais ou na captura dos links, logo acima). Vamos repetir o procedimento para o conteúdo, autor e data e hora das notícias:
+
+Note-se que, no caso da data e hora da notícia, há uma tag com mesmo nome e atributos que a tag que desejamos. O resultado da aplicação da função getNodeSet é uma lista de nodes com 2 elementos. No caso, examinando saberemos que nos interessa o segundo. Após extrairmos o conteúdo, portanto, teremos um vetor com dois textos contendo data e hora e ficaremos apenas com o segundo elemento do vetor.
+
+```{r}
+titulo <- getNodeSet(noticia,"//h1[@itemprop='headline']")
+titulo <- xmlSApply(titulo, xmlValue)
+autor <- getNodeSet(noticia,"//div[@itemprop='author']")
+autor <- xmlSApply(autor, xmlValue)
+conteudo <- getNodeSet(noticia, "//div[@itemprop='articleBody']")
+conteudo <- xmlSApply(conteudo, xmlValue)
+datahora <- getNodeSet(noticia, "//time")
+datahora <- xmlSApply(datahora, xmlValue)[2]
+```
+
+Pronto, já sabemos capturar uma notícia. Para facilitar a organização futura dos dados, vamos aproveitar estas quatro informações capturadas e criar um data frame de apenas uma linha e quatro colunas. Adiante, adicionaremos cada novo data frame de uma linha ao data frame que será o resultado final do programa.
+
+```{r}
+dados.noticia <- data.frame(titulo, autor, datahora, conteudo)
+```
+
+Resta muito pouco a fazer agora. Basicamente, falta criar um processo iterativo que capture as 826 notícias e acumule os resultados (utilizando a função "rbind") em um data frame ("dados.folha"). Já sabemos fazer isso desde a atividade 1. Basta criar um data frame vazio e criar um for loop que percorra os 826 links capturados anteriormente (objeto "links.folha"). Vejamos como fazer isto (vamos executar apenas as 50 primeiras por parcimônia, mas você pode testar as 200 -- não demorará muito):
+
+```{r}
+dados.folha <- data.frame()
+for (i in links.folha[1:200]){
+  pagina <- readLines(i)
+  noticia <- htmlParse(pagina)
+  noticia <- xmlRoot(noticia)
+  titulo <- getNodeSet(noticia,"//h1[@itemprop='headline']")
+  titulo <- xmlSApply(titulo, xmlValue)
+  autor <- getNodeSet(noticia,"//div[@itemprop='author']")
+  autor <- xmlSApply(autor, xmlValue)
+  conteudo <- getNodeSet(noticia, "//div[@itemprop='articleBody']")
+  conteudo <- xmlSApply(conteudo, xmlValue)
+  datahora <- getNodeSet(noticia, "//time")
+  datahora <- xmlSApply(datahora, xmlValue)[2]
+  dados.noticia <- data.frame(titulo, autor, datahora, conteudo)
+  dados.folha <- rbind(dados.folha, dados.noticia)
+}
+```
+
+Vamos observar o resultado da nossa captura:
+
+```{r}
+str(dados.folha)
+dim(dados.folha)
+head(dados.folha[,1:3])
+```
+
